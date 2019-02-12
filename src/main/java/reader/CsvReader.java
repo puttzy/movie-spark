@@ -100,7 +100,7 @@ public class CsvReader {
 
     public Double findTitleAndRatingCorrelation(String titleSubstring) {
         Dataset<Row> ratings = getRankingsForMovie(titleSubstring);
-        JavaSparkContext sparkContext= JavaSparkContext.fromSparkContext(spark.sparkContext());
+        JavaSparkContext sparkContext = JavaSparkContext.fromSparkContext(spark.sparkContext());
         JavaDoubleRDD xSeries = sparkContext.parallelizeDoubles(DatasetUtil.extractHashCodeValuesFromDataset(ratings, 1));
         JavaDoubleRDD ySeries = sparkContext.parallelizeDoubles(DatasetUtil.extractDoubleValuesFromDataset(ratings, 5));
         return Statistics.corr(xSeries.srdd(), ySeries.srdd(), "pearson");
@@ -108,7 +108,7 @@ public class CsvReader {
 
     public MultivariateStatisticalSummary summarizeRatingDataForTitle(String title) {
         Dataset<Row> ratings = getRankingsForMovie(title);
-        JavaSparkContext sparkContext= JavaSparkContext.fromSparkContext(spark.sparkContext());
+        JavaSparkContext sparkContext = JavaSparkContext.fromSparkContext(spark.sparkContext());
         JavaRDD<Vector> distributedDataset = sparkContext.parallelize(DatasetUtil.transformDataSetIntoVectorList(ratings, 5));
         return Statistics.colStats(distributedDataset.rdd());
     }

@@ -1,5 +1,8 @@
 package reader;
 
+import model.Movie;
+import model.Rating;
+import model.Tag;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaDoubleRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -13,6 +16,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import util.DatasetUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.spark.sql.functions.*;
@@ -26,38 +30,26 @@ public class CsvReader {
     private Dataset<Row> ratedMoviesDataset;
     private Dataset<Row> taggedMoviesDataset;
 
-    public CsvReader(String csvFilePath) {
-        configureSparkSession();
-        readDataSet(csvFilePath);
+    public CsvReader(SparkSession sparkSession) {
+        this.spark = sparkSession;
+        readDataSet();
     }
 
-    private void configureSparkSession() {
-        SparkConf configuration = new SparkConf();
-        configuration.setAppName("CSV Reader")
-                .setMaster("local");
-
-        spark = new SparkSession.Builder()
-                .config(configuration)
-                .getOrCreate();
-
-        spark.sparkContext().setLogLevel("ERROR");
-    }
-
-    private void readDataSet(String filePath) {
-        readMovieDataset(filePath);
+    private void readDataSet() {
+        readMovieDataset();
         readRatingsDataset();
         readTagsDataset();
         joinDatasets();
     }
 
-    private void readMovieDataset(String filePath) {
+    private void readMovieDataset() {
         moviesDataSet = spark
                 .read()
                 .format("csv")
                 .option("sep", ",")
                 .option("inferSchema", "true")
                 .option("header", "true")
-                .load(filePath);
+                .load("src/main/resources/movies.csv");
     }
 
     private void readRatingsDataset() {
@@ -85,38 +77,29 @@ public class CsvReader {
         taggedMoviesDataset = moviesDataSet.join(tagsDataSet, tagsDataSet.col("movieId").equalTo(moviesDataSet.col("movieId")));
     }
 
-    public Dataset<Row> getRowsWithTitle(String title) {
-        return moviesDataSet.filter(moviesDataSet.col("title").contains(title));
+    public List<Movie> getMoviesWithTitle(String title) {
+        Dataset<Row> filteredMovies = filterDataset(moviesDataSet, "title", title);
+        return deserializeMovies(filteredMovies);
     }
 
-    public Dataset<Row> getRankingsForMovie(String title) {
-        return ratedMoviesDataset.filter(ratedMoviesDataset.col("title").contains(title));
+    public List<Rating> getRatingsForMovie(String title) {
+        Dataset<Row> ratings = filterDataset(ratedMoviesDataset, "title", title);
+        return deserializeRatings(ratings);
     }
 
     public Double getAverageRankingForMovie(String title) {
-        Dataset<Row> firstKnightRankings = getRankingsForMovie(title);
-        return firstKnightRankings.select(mean(firstKnightRankings.col("rating"))).collectAsList().get(0).getDouble(0);
-    }
-
-    public Double findTitleAndRatingCorrelation(String titleSubstring) {
-        Dataset<Row> ratings = getRankingsForMovie(titleSubstring);
-        JavaSparkContext sparkContext = JavaSparkContext.fromSparkContext(spark.sparkContext());
-        JavaDoubleRDD xSeries = sparkContext.parallelizeDoubles(DatasetUtil.extractHashCodeValuesFromDataset(ratings, 1));
-        JavaDoubleRDD ySeries = sparkContext.parallelizeDoubles(DatasetUtil.extractDoubleValuesFromDataset(ratings, 5));
-        return Statistics.corr(xSeries.srdd(), ySeries.srdd(), "pearson");
-    }
-
-    public MultivariateStatisticalSummary summarizeRatingDataForTitle(String title) {
-        Dataset<Row> ratings = getRankingsForMovie(title);
-        JavaSparkContext sparkContext = JavaSparkContext.fromSparkContext(spark.sparkContext());
-        JavaRDD<Vector> distributedDataset = sparkContext.parallelize(DatasetUtil.transformDataSetIntoVectorList(ratings, 5));
-        return Statistics.colStats(distributedDataset.rdd());
+        Dataset<Row> ratings = filterDataset(ratedMoviesDataset, "title", title);
+        return DatasetUtil.findAverageOfDataset(ratings, "rating");
     }
 
     public List<String> findSimilarMovies(String title) {
         String tag = getTopTagForFilm(title);
         Dataset<Row> similarFilms = taggedMoviesDataset.filter(taggedMoviesDataset.col("tag").equalTo(tag));
         return DatasetUtil.extractStringsFromDataset(similarFilms, 1);
+    }
+
+    private Dataset<Row> filterDataset(Dataset<Row> dataset, String columnName, Object columnValue) {
+        return dataset.filter(col(columnName).contains(columnValue));
     }
 
     private String getTopTagForFilm(String title) {
@@ -127,5 +110,29 @@ public class CsvReader {
         RelationalGroupedDataset movieTags = tags.groupBy(tags.col("tag"));
         Dataset<Row> maxTag = movieTags.count().orderBy(col("count").desc());
         return maxTag.collectAsList().get(0).getString(0);
+    }
+
+    private List<Movie> deserializeMovies(Dataset<Row> dataset) {
+        List<Movie> movies = new ArrayList<Movie>();
+        for (Row row : dataset.collectAsList()) {
+            movies.add(Movie.fromRow(row));
+        }
+        return movies;
+    }
+
+    private List<Tag> deserializeTags(Dataset<Row> dataset) {
+        List<Tag> tags = new ArrayList<>();
+        for (Row row : dataset.collectAsList()) {
+            tags.add(Tag.fromRow(row));
+        }
+        return tags;
+    }
+
+    private List<Rating> deserializeRatings(Dataset<Row> dataset) {
+        List<Rating> ratings = new ArrayList<>();
+        for (Row row : dataset.collectAsList()) {
+            ratings.add(Rating.fromRow(row));
+        }
+        return ratings;
     }
 }

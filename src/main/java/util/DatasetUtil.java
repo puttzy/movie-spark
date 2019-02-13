@@ -1,38 +1,18 @@
 package util;
 
-import org.apache.spark.mllib.linalg.Vector;
-import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.mean;
+
 public class DatasetUtil {
-    public static List<Double> extractDoubleValuesFromDataset(Dataset<Row> dataset, int columnIndex) {
-        List<Double> values = new ArrayList<Double>();
-        for (Row row : dataset.collectAsList()) {
-            values.add(row.getDouble(columnIndex));
-        }
-        return values;
-    }
 
-    public static List<Double> extractHashCodeValuesFromDataset(Dataset<Row> dataset, int columnIndex) {
-        List<Double> values = new ArrayList<Double>();
-        for (Row row : dataset.collectAsList()) {
-            Double value = (double) row.getString(columnIndex).hashCode();
-            values.add(value);
-        }
-        return values;
-    }
-
-    public static List<Vector> transformDataSetIntoVectorList(Dataset<Row> dataset, int columnIndex) {
-        List<Vector> vectors = new ArrayList<Vector>();
-        for (Row row : dataset.collectAsList()) {
-            Double value = row.getDouble(columnIndex);
-            vectors.add(Vectors.dense(value));
-        }
-        return vectors;
+    public static Double findAverageOfDataset(Dataset<Row> dataset, String columnName) {
+        return dataset.select(mean(col(columnName))).collectAsList().get(0).getDouble(0);
     }
 
     public static List<String> extractStringsFromDataset(Dataset<Row> dataset, int columnIndex) {

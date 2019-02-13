@@ -10,7 +10,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="Spark_CSV_Reader" target="1.5" />
+      <module name="Spark_CSV_Reader" target="1.7" />
     </bytecodeTargetLevel>
   </component>
 </project>

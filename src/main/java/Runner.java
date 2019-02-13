@@ -1,7 +1,10 @@
+import model.Movie;
+import model.Rating;
+import org.apache.spark.SparkConf;
 import org.apache.spark.mllib.stat.MultivariateStatisticalSummary;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import reader.CsvReader;
+import stats.Statistician;
 
 import java.util.List;
 import java.util.Scanner;
@@ -9,7 +12,9 @@ import java.util.Scanner;
 public class Runner {
 
     private static boolean isFinished = false;
-    private static CsvReader reader = new CsvReader("src/main/resources/movies.csv");
+    private static SparkSession sparkClient;
+    private static CsvReader reader;
+    private static Statistician statistician;
     private static Scanner keyboard;
 
     private static final int FIND_MOVIES = 1;
@@ -22,6 +27,9 @@ public class Runner {
 
     public static void main(String[] args) {
         configureInput();
+        configureSparkSession();
+        configureReader();
+        configureStatistician();
         while (!isFinished) {
             printMenu();
             printSpace();
@@ -30,8 +38,28 @@ public class Runner {
         }
     }
 
+    private static void configureSparkSession() {
+        SparkConf configuration = new SparkConf();
+        configuration.setAppName("CSV Reader")
+                .setMaster("local");
+
+        sparkClient = new SparkSession.Builder()
+                .config(configuration)
+                .getOrCreate();
+
+        sparkClient.sparkContext().setLogLevel("ERROR");
+    }
+
     private static void configureInput() {
         keyboard = new Scanner(System.in);
+    }
+
+    private static void configureReader() {
+        reader = new CsvReader(sparkClient);
+    }
+
+    private static void configureStatistician() {
+        statistician = Statistician.withSparkSession(sparkClient);
     }
 
     private static void readInput() {
@@ -79,17 +107,15 @@ public class Runner {
 
     private static void findMoviesWithSubstring() {
         String substring = keyboard.nextLine();
-        Dataset<Row> movies = reader.getRowsWithTitle(substring);
-        System.out.println("Movies with the title 'Knight': ".concat(String.valueOf(movies.count())));
-        movies.show();
+        List<Movie> movies = reader.getMoviesWithTitle(substring);
+        System.out.println("Movies with the title 'Knight': ".concat(String.valueOf(movies.size())));
     }
 
     private static void findRankingsForMovie() {
         promptForTitle();
         String title = keyboard.nextLine();
-        Dataset<Row> firstKnightRankings = reader.getRankingsForMovie(title);
-        System.out.println("Number of ratings for the film ".concat(title).concat(": ".concat(String.valueOf(firstKnightRankings.count()))));
-        firstKnightRankings.show();
+        List<Rating> ratings = reader.getRatingsForMovie(title);
+        System.out.println("Number of ratings for the film ".concat(title).concat(": ".concat(String.valueOf(ratings.size()))));
     }
 
     private static void findAverageRatingForMovie() {
@@ -101,13 +127,16 @@ public class Runner {
     private static void findCorrelation() {
         promptForTitle();
         String title = keyboard.nextLine();
-        System.out.println("r = ".concat(String.valueOf(reader.findTitleAndRatingCorrelation(title))));
+        List<Rating> ratings = reader.getRatingsForMovie(title);
+        Double rCorrelation = statistician.correlateRatingsToHighScore(ratings);
+        System.out.println("r = ".concat(String.valueOf(rCorrelation)));
     }
 
     private static void summarizeDataForMovie() {
         promptForTitle();
         String title = keyboard.nextLine();
-        MultivariateStatisticalSummary summary = reader.summarizeRatingDataForTitle(title);
+        List<Rating> ratings = reader.getRatingsForMovie(title);
+        MultivariateStatisticalSummary summary = statistician.summarizeRatingStatistics(ratings);
         System.out.println("\u03C3₂ = ".concat(String.valueOf(summary.variance().toArray()[0])));
         System.out.println("max(rating) = ".concat(String.valueOf(summary.max().toArray()[0])));
         System.out.println("min(rating) = ".concat(String.valueOf(summary.min().toArray()[0])));

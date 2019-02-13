@@ -1,5 +1,7 @@
 package model;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.spark.sql.Row;
 
 import java.util.Arrays;
@@ -21,8 +23,13 @@ public class Movie {
     public static Movie fromRow(Row row) {
         int id = row.getInt(row.fieldIndex("movieId"));
         String title = row.getString(row.fieldIndex("title"));
-        List<String> genres = Arrays.asList(row.getString(2).split("|"));
+        List<String> genres = Arrays.asList(row.getString(2).split("\\|"));
         return new Movie(id, title, genres);
     }
 
+    @Override
+    public String toString() {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        return gson.toJson(this);
+    }
 }

@@ -109,6 +109,9 @@ public class Runner {
         String substring = keyboard.nextLine();
         List<Movie> movies = reader.getMoviesWithTitle(substring);
         System.out.println("Movies with the title 'Knight': ".concat(String.valueOf(movies.size())));
+        for (Movie movie : movies) {
+            System.out.println(movie.toString());
+        }
     }
 
     private static void findRankingsForMovie() {

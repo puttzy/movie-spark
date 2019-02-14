@@ -4,26 +4,25 @@ import model.Rating;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RatingsUtil {
 
     public static List<Double> extractRatingKeys(List<Rating> ratings) {
         List<Double> keys = new ArrayList<>();
-        for (Rating rating : ratings) {
+
+        ratings.forEach(rating -> {
             if (rating.getScore() > 3.0) {
                 keys.add(1.0);
             } else {
                 keys.add(0.0);
             }
-        }
+        });
         return keys;
     }
 
     public static List<Double> extractRatingScores(List<Rating> ratings) {
-        List<Double> scores = new ArrayList<>();
-        for (Rating rating : ratings) {
-            scores.add(rating.getScore());
-        }
-        return scores;
+        return ratings.stream().map(Rating::getScore).collect(Collectors.toList());
+
     }
 }

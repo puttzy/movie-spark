@@ -4,16 +4,15 @@ import model.Rating;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class VectorUtil {
 
     public static List<Vector> createVectorsFromRatings(List<Rating> ratings) {
-        List<Vector> vectors = new ArrayList<>();
-        for (Rating rating : ratings) {
-            vectors.add(Vectors.dense(rating.getScore()));
-        }
-        return vectors;
+        return ratings
+                .stream()
+                .map(rating -> Vectors.dense(rating.getScore()))
+                .collect(Collectors.toList());
     }
 }

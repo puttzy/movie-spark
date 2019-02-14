@@ -34,10 +34,7 @@ public class CsvReader {
     private static final String SEPERATOR = ",";
     private static final String TRUE = "true";
     private static final String COMMA = ",";
-
     private static final String TITLE = "title";
-
-
 
     public CsvReader(SparkSession sparkSession) {
         this.sparkSession = sparkSession;
@@ -74,8 +71,8 @@ public class CsvReader {
     }
 
     private void joinDatasets() {
-        ratedMoviesDataset = moviesDataSet.join(rankingsDataSet, rankingsDataSet.col(MOVIE_ID).equalTo(moviesDataSet.col(MOVIE_ID)));
-        taggedMoviesDataset = moviesDataSet.join(tagsDataSet, tagsDataSet.col(MOVIE_ID).equalTo(moviesDataSet.col(MOVIE_ID)));
+        ratedMoviesDataset = moviesDataSet.join(rankingsDataSet, rankingsDataSet.col("movieId").equalTo(moviesDataSet.col("movieId")));
+        taggedMoviesDataset = moviesDataSet.join(tagsDataSet, tagsDataSet.col("movieId").equalTo(moviesDataSet.col("movieId")));
     }
 
     public List<Movie> getMoviesWithTitle(String title) {

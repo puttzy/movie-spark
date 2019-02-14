@@ -3,8 +3,8 @@ package util;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.mean;
@@ -16,10 +16,9 @@ public class DatasetUtil {
     }
 
     public static List<String> extractStringsFromDataset(Dataset<Row> dataset, int columnIndex) {
-        List<String> strings = new ArrayList<String>();
-        for (Row row : dataset.collectAsList()) {
-            strings.add(row.getString(columnIndex));
-        }
-        return strings;
+        return dataset.collectAsList()
+                .stream()
+                .map(row -> row.getString(columnIndex))
+                .collect(Collectors.toList());
     }
 }

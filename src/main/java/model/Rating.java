@@ -1,37 +1,24 @@
 package model;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.Getter;
 import org.apache.spark.sql.Row;
 
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Getter
 public class Rating {
     private int userId;
     private double score;
     private int timestamp;
-
-    private Rating(int userId, double score, int timestamp) {
-        this.userId = userId;
-        this.score = score;
-        this.timestamp = timestamp;
-    }
 
     public static Rating fromRow(Row row) {
         int userId = row.getInt(row.fieldIndex("userId"));
         double score = row.getDouble(row.fieldIndex("rating"));
         int timestamp = row.getInt(row.fieldIndex("timestamp"));
         return new Rating(userId, score, timestamp);
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public double getScore() {
-        return score;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
     }
 
     @Override

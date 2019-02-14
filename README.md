@@ -24,3 +24,7 @@ The [MovieLens 20M dataset](https://grouplens.org/datasets/movielens/) is the de
 ## Running
 
 The easiest way to run this application is to download [IntelliJ](https://www.jetbrains.com/idea/) and choose **Import from exisiting sources/Maven**. Then, hit the Run button (green play button.)
+
+## Dependencies
+You'll need to have the [apache hadoop 2.9.2 library](https://www.apache.org/dyn/closer.cgi/hadoop/common/hadoop-2.9.2/hadoop-2.9.2.tar.gz) on your path
+> export path/to/hadoop/directory

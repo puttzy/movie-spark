@@ -9,10 +9,11 @@ import stats.Statistician;
 import java.util.List;
 import java.util.Scanner;
 
+
 public class Runner {
 
     private static boolean isFinished = false;
-    private static SparkSession sparkClient;
+    private static SparkSession sparkSession;
     private static CsvReader reader;
     private static Statistician statistician;
     private static Scanner keyboard;
@@ -30,6 +31,7 @@ public class Runner {
         configureSparkSession();
         configureReader();
         configureStatistician();
+
         while (!isFinished) {
             printMenu();
             printSpace();
@@ -43,11 +45,11 @@ public class Runner {
         configuration.setAppName("CSV Reader")
                 .setMaster("local");
 
-        sparkClient = new SparkSession.Builder()
+        sparkSession = new SparkSession.Builder()
                 .config(configuration)
                 .getOrCreate();
 
-        sparkClient.sparkContext().setLogLevel("ERROR");
+        sparkSession.sparkContext().setLogLevel("ERROR");
     }
 
     private static void configureInput() {
@@ -55,11 +57,11 @@ public class Runner {
     }
 
     private static void configureReader() {
-        reader = new CsvReader(sparkClient);
+        reader = new CsvReader(sparkSession);
     }
 
     private static void configureStatistician() {
-        statistician = Statistician.withSparkSession(sparkClient);
+        statistician = Statistician.withSparkSession(sparkSession);
     }
 
     private static void readInput() {
@@ -108,8 +110,9 @@ public class Runner {
     private static void findMoviesWithSubstring() {
         String substring = keyboard.nextLine();
         List<Movie> movies = reader.getMoviesWithTitle(substring);
-        System.out.println("Movies with the title 'Knight': ".concat(String.valueOf(movies.size())));
-        for (Movie movie : movies) {
+        System.out.println("Movies with the title '"+substring+"': ".concat(String.valueOf(movies.size())));
+
+        for (Movie movie : movies ){
             System.out.println(movie.toString());
         }
     }

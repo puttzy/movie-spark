@@ -1,7 +1,10 @@
 import model.Movie;
 import model.Rating;
 import org.apache.spark.SparkConf;
+import org.apache.spark.ml.classification.LogisticRegressionModel;
 import org.apache.spark.mllib.stat.MultivariateStatisticalSummary;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import reader.CsvReader;
 import stats.Statistician;
@@ -24,7 +27,8 @@ public class Runner {
     private static final int FIND_CORRELATION = 4;
     private static final int SUMMARIZE_STATISTICS = 5;
     private static final int FIND_SIMILAR_MOVIES = 6;
-    private static final int EXIT = 7;
+    private static final int FIND_BINOMIAL_REGRESSION = 7;
+    private static final int EXIT = 8;
 
     public static void main(String[] args) {
         configureInput();
@@ -86,6 +90,9 @@ public class Runner {
             case FIND_SIMILAR_MOVIES:
                 findSimilarMovies();
                 break;
+            case FIND_BINOMIAL_REGRESSION:
+                findBinomialRegression();
+                break;
             case EXIT:
                 isFinished = true;
                 System.exit(0);
@@ -104,7 +111,8 @@ public class Runner {
         System.out.println("4. Find the correlation between a title and ratings.");
         System.out.println("5. Summarize statistical data for a specific movie title.");
         System.out.println("6. Find similar movies to a film.");
-        System.out.println("7. Exit.");
+        System.out.println("7. Calculate the binomial regression of the ratings for a movie title.");
+        System.out.println("8. Exit.");
     }
 
     private static void findMoviesWithSubstring() {
@@ -157,6 +165,15 @@ public class Runner {
         for (String movie : similarMovies) {
             System.out.println(movie);
         }
+    }
+
+    private static void findBinomialRegression() {
+        promptForTitle();
+        String title = keyboard.nextLine();
+        Dataset<Row> rawDataset = reader.getRawRankingDatasetForMovie(title);
+        LogisticRegressionModel regressionModel = statistician.calculateBinomialRegression(rawDataset);
+        System.out.println("Coefficients: "
+                + regressionModel.coefficients() + " Intercept: " + regressionModel.intercept());
     }
 
     private static void printSpace() {

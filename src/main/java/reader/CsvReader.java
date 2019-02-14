@@ -99,6 +99,10 @@ public class CsvReader {
         return DatasetUtil.extractStringsFromDataset(similarFilms, 1);
     }
 
+    public Dataset<Row> getRawRankingDatasetForMovie(String title) {
+        return filterDataset(ratedMoviesDataset, TITLE, title);
+    }
+
     private Dataset<Row> filterDataset(Dataset<Row> dataset, String columnName, Object columnValue) {
         return dataset.filter(col(columnName).contains(columnValue));
     }

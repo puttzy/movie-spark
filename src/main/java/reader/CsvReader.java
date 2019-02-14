@@ -1,5 +1,6 @@
 package reader;
 
+import model.CsvModel;
 import model.Movie;
 import model.Rating;
 import model.Tag;
@@ -10,7 +11,6 @@ import org.apache.spark.sql.SparkSession;
 import util.DatasetUtil;
 
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.functions.col;
@@ -137,13 +137,16 @@ public class CsvReader {
     }
 
 
-    private <T> List<T> deserializeRow(Dataset<Row> dataset, Function getRowFunction) {
-        return (List<T>) dataset.collectAsList()
+    private List<CsvModel> deserializeRow(Dataset<Row> dataset, Class<CsvModel> clazz) throws IllegalAccessException, InstantiationException {
+        CsvModel csvModel = clazz.newInstance();
+/*        return dataset.collectAsList()
                 .stream()
-                .map(getRowFunction)
-                .collect(Collectors.toList());
+                .map(r -> csvModel.fromRow(r))
+                .collect(Collectors.toList());*/
 
+        return null;
     }
+
 
     private List<Movie> deserializeMovies(Dataset<Row> dataset) {
         return dataset.collectAsList()

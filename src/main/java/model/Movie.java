@@ -3,6 +3,7 @@ package model;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.spark.sql.Row;
@@ -11,13 +12,13 @@ import java.util.Arrays;
 import java.util.List;
 
 @RequiredArgsConstructor(access= AccessLevel.PRIVATE)
+@NoArgsConstructor
 public class Movie {
     @NonNull private int id;
     @NonNull private String title;
     @NonNull private List<String> genres;
     private List<Tag> tags;
     private List<Rating> ratings;
-
 
 
     public static Movie fromRow(Row row) {

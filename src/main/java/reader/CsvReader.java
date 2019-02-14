@@ -25,9 +25,9 @@ public class CsvReader {
 
 
     private static final String FORMAT_CSV = "csv";
-    private static final String INFER_SCHEMA = "csv";
-    private static final String HEADER = "csv";
-    private static final String SEPERATOR = "sep";
+    private static final String INFER_SCHEMA = "inferSchema";
+    private static final String HEADER = "header";
+    private static final String SEPERATOR = ",";
     private static final String TRUE = "true";
     private static final String COMMA = ",";
 

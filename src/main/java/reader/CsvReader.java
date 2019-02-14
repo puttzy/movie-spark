@@ -10,6 +10,7 @@ import org.apache.spark.sql.SparkSession;
 import util.DatasetUtil;
 
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.functions.col;
@@ -135,6 +136,14 @@ public class CsvReader {
         return s;
     }
 
+
+    private <T> List<T> deserializeRow(Dataset<Row> dataset, Function getRowFunction) {
+        return (List<T>) dataset.collectAsList()
+                .stream()
+                .map(getRowFunction)
+                .collect(Collectors.toList());
+
+    }
 
     private List<Movie> deserializeMovies(Dataset<Row> dataset) {
         return dataset.collectAsList()

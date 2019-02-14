@@ -1,9 +1,7 @@
 package reader;
 
-import model.CsvModel;
 import model.Movie;
 import model.Rating;
-import model.Tag;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.RelationalGroupedDataset;
 import org.apache.spark.sql.Row;
@@ -11,6 +9,7 @@ import org.apache.spark.sql.SparkSession;
 import util.DatasetUtil;
 
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.functions.col;
@@ -43,9 +42,10 @@ public class CsvReader {
     }
 
     private void readDataSets() {
-        readMovieDataset();
-        readRatingsDataset();
-        readTagsDataset();
+        moviesDataSet = readDataset("src/main/resources/movies.csv");
+        rankingsDataSet = readDataset("src/main/resources/ratings.csv");
+        tagsDataSet = readDataset("src/main/resources/tags.csv");
+
         joinDatasets();
     }
 
@@ -59,31 +59,25 @@ public class CsvReader {
                 .load(pathToFile);
     }
 
-    private void readMovieDataset() {
-        moviesDataSet = loadFile("src/main/resources/movies.csv");
+    private Dataset<Row> readDataset(String filePath) {
+        return loadFile(filePath);
     }
 
-    private void readRatingsDataset() {
-        rankingsDataSet = loadFile("src/main/resources/ratings.csv");
-    }
-
-    private void readTagsDataset() {
-        tagsDataSet = loadFile("src/main/resources/tags.csv");
-    }
 
     private void joinDatasets() {
         ratedMoviesDataset = moviesDataSet.join(rankingsDataSet, rankingsDataSet.col("movieId").equalTo(moviesDataSet.col("movieId")));
         taggedMoviesDataset = moviesDataSet.join(tagsDataSet, tagsDataSet.col("movieId").equalTo(moviesDataSet.col("movieId")));
     }
 
+
     public List<Movie> getMoviesWithTitle(String title) {
         Dataset<Row> filteredMovies = filterDataset(moviesDataSet, TITLE, title);
-        return deserializeMovies(filteredMovies);
+        return deserializeRow(filteredMovies, Movie::new);
     }
 
     public List<Rating> getRatingsForMovie(String title) {
         Dataset<Row> ratings = filterDataset(ratedMoviesDataset, TITLE, title);
-        return deserializeRatings(ratings);
+        return deserializeRow(ratings, Rating::new);
     }
 
     public Double getAverageRankingForMovie(String title) {
@@ -129,7 +123,6 @@ public class CsvReader {
 
         String s = tagsDataSet
                 .where(col(MOVIE_ID).equalTo(getMovieIdByTitle(title)))
-
                 .select(col("tag"))
                 .groupBy(col("tag"))
                 .agg(count(col("tag")).alias("total"))
@@ -141,35 +134,13 @@ public class CsvReader {
     }
 
 
-    private List<CsvModel> deserializeRow(Dataset<Row> dataset, Class<CsvModel> clazz) throws IllegalAccessException, InstantiationException {
-        CsvModel csvModel = clazz.newInstance();
-/*        return dataset.collectAsList()
-                .stream()
-                .map(r -> csvModel.fromRow(r))
-                .collect(Collectors.toList());*/
+    private <T> List<T> deserializeRow(Dataset<Row> dataset, Function<Row, T> parseRow) {
 
-        return null;
-    }
-
-
-    private List<Movie> deserializeMovies(Dataset<Row> dataset) {
         return dataset.collectAsList()
                 .stream()
-                .map(Movie::fromRow)
+                .map(parseRow)
                 .collect(Collectors.toList());
+
     }
 
-    private List<Tag> deserializeTags(Dataset<Row> dataset) {
-        return dataset.collectAsList()
-                .stream()
-                .map(Tag::fromRow)
-                .collect(Collectors.toList());
-    }
-
-    private List<Rating> deserializeRatings(Dataset<Row> dataset) {
-        return dataset.collectAsList()
-                .stream()
-                .map(Rating::fromRow)
-                .collect(Collectors.toList());
-    }
 }

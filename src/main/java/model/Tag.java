@@ -19,7 +19,7 @@ public class Tag {
         try {
             String name = row.getString(row.fieldIndex("tag"));
             int userId = row.getInt(row.fieldIndex("userId"));
-            int timestamp =row.getInt(row.fieldIndex("timestamp"));
+            int timestamp = row.getInt(row.fieldIndex("timestamp"));
             return new Tag(userId, name, timestamp);
         } catch (IllegalArgumentException | UnsupportedOperationException exception) {
             exception.printStackTrace();

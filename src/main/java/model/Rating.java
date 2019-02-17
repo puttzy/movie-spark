@@ -1,9 +1,9 @@
 package model;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.spark.sql.Row;
 

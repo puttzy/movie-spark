@@ -64,23 +64,23 @@ public class CsvReader {
 
 
     private void joinDatasets() {
-        ratedMoviesDataset = moviesDataSet.join(rankingsDataSet, rankingsDataSet.col("movieId").equalTo(moviesDataSet.col("movieId")));
-        taggedMoviesDataset = moviesDataSet.join(tagsDataSet, tagsDataSet.col("movieId").equalTo(moviesDataSet.col("movieId")));
+        ratedMoviesDataset = moviesDataSet.join(rankingsDataSet, rankingsDataSet.col(MOVIE_ID).equalTo(moviesDataSet.col(MOVIE_ID)));
+        taggedMoviesDataset = moviesDataSet.join(tagsDataSet, tagsDataSet.col(MOVIE_ID).equalTo(moviesDataSet.col(MOVIE_ID)));
     }
 
 
     public List<Movie> getMoviesWithTitle(String title) {
-        Dataset<Row> filteredMovies = filterDataset(moviesDataSet, TITLE, title);
+        Dataset<Row> filteredMovies = filterDatasetByLikeTitle(moviesDataSet, title);
         return deserializeRow(filteredMovies, Movie::fromRow);
     }
 
     public List<Rating> getRatingsForMovie(String title) {
-        Dataset<Row> ratings = filterDataset(ratedMoviesDataset, TITLE, title);
+        Dataset<Row> ratings = filterDatasetByLikeTitle(ratedMoviesDataset, title);
         return deserializeRow(ratings, Rating::fromRow);
     }
 
     public Double getAverageRankingForMovie(String title) {
-        Dataset<Row> ratings = filterDataset(ratedMoviesDataset, TITLE, title);
+        Dataset<Row> ratings = filterDatasetByLikeTitle(ratedMoviesDataset, title);
         return DatasetUtil.findAverageOfDataset(ratings, RATING);
     }
 
@@ -92,12 +92,17 @@ public class CsvReader {
     }
 
 
+
     public Dataset<Row> getRawRankingDatasetForMovie(String title) {
-        return filterDataset(ratedMoviesDataset, TITLE, title);
+        return filterDatasetByLikeTitle(ratedMoviesDataset, title);
     }
 
-    private Dataset<Row> filterDataset(Dataset<Row> dataset, String columnName, Object columnValue) {
+    private Dataset<Row> filterDatasetByColumn(Dataset<Row> dataset, String columnName, Object columnValue) {
         return dataset.filter(col(columnName).contains(columnValue));
+    }
+
+    private Dataset<Row> filterDatasetByLikeTitle(Dataset<Row> dataset, Object columnValue) {
+        return filterDatasetByColumn(dataset, TITLE, columnValue);
     }
 
     private Integer getMovieIdByTitle(String title) {

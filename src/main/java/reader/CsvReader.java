@@ -2,9 +2,8 @@ package reader;
 
 import model.Movie;
 import model.Rating;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import model.record.MovieRecord;
+import org.apache.spark.sql.*;
 import util.DatasetUtil;
 
 import java.util.List;
@@ -48,7 +47,7 @@ public class CsvReader {
         joinDatasets();
     }
 
-    private Dataset<Row> loadFile(String pathToFile){
+    private Dataset<Row> loadFile(String pathToFile) {
         return sparkSession
                 .read()
                 .format(FORMAT_CSV)
@@ -110,7 +109,6 @@ public class CsvReader {
     }
 
     private String getTopTagForFilm(String title) {
-
         return tagsDataSet
                 .where(col(MOVIE_ID).equalTo(getMovieIdByTitle(title)))
                 .select(col("tag"))
@@ -121,11 +119,27 @@ public class CsvReader {
 
 
     private <T> List<T> deserializeRow(Dataset<Row> dataset, Function<Row, T> parseRowFunction) {
-
         return dataset.collectAsList()
                 .stream()
                 .map(parseRowFunction)
                 .collect(Collectors.toList());
 
+    }
+
+    public void findMoviesUsingView(String title) {
+        this.filterDataset(moviesDataSet, TITLE, title).createOrReplaceTempView("movies");
+        sparkSession.sql("SELECT * FROM movies").show();
+    }
+
+    public Dataset<MovieRecord> findSerializedDataset() {
+        Encoder movieEncoder = Encoders.bean(MovieRecord.class);
+        return sparkSession
+                .read()
+                .format(FORMAT_CSV)
+                .option(SEPERATOR, COMMA)
+                .option(INFER_SCHEMA, TRUE)
+                .option(HEADER, TRUE)
+                .load("src/main/resources/movies.csv")
+                .as(movieEncoder);
     }
 }

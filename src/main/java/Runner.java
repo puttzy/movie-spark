@@ -1,5 +1,6 @@
 import model.Movie;
 import model.Rating;
+import model.record.MovieRecord;
 import org.apache.spark.SparkConf;
 import org.apache.spark.ml.classification.LogisticRegressionModel;
 import org.apache.spark.mllib.stat.MultivariateStatisticalSummary;
@@ -28,7 +29,8 @@ public class Runner {
     private static final int SUMMARIZE_STATISTICS = 5;
     private static final int FIND_SIMILAR_MOVIES = 6;
     private static final int FIND_BINOMIAL_REGRESSION = 7;
-    private static final int EXIT = 8;
+    private static final int FIND_SERIALIZED_DATASET = 8;
+    private static final int EXIT = 9;
 
     public static void main(String[] args) {
         configureInput();
@@ -93,6 +95,9 @@ public class Runner {
             case FIND_BINOMIAL_REGRESSION:
                 findBinomialRegression();
                 break;
+            case FIND_SERIALIZED_DATASET:
+                findSerializedDataset();
+                break;
             case EXIT:
                 isFinished = true;
                 System.exit(0);
@@ -112,7 +117,8 @@ public class Runner {
         System.out.println("5. Summarize statistical data for a specific movie title.");
         System.out.println("6. Find similar movies to a film.");
         System.out.println("7. Calculate the binomial regression of the ratings for a movie title.");
-        System.out.println("8. Exit.");
+        System.out.println("8. Extract the serialized movie set.");
+        System.out.println("9. Exit.");
     }
 
     private static void findMoviesWithSubstring() {
@@ -123,6 +129,8 @@ public class Runner {
         for (Movie movie : movies ){
             System.out.println(movie.toString());
         }
+
+        reader.findMoviesUsingView(substring);
     }
 
     private static void findRankingsForMovie() {
@@ -182,5 +190,12 @@ public class Runner {
 
     private static void promptForTitle() {
         System.out.print("Enter a movie title substring: ");
+    }
+
+    private static void findSerializedDataset() {
+        Dataset<MovieRecord> dataset = reader.findSerializedDataset();
+        for (MovieRecord record : dataset.collectAsList()) {
+            System.out.println(Movie.fromRecord(record).toString());
+        }
     }
 }

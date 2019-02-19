@@ -96,12 +96,12 @@ public class CsvReader {
         return filterDatasetByLikeTitle(ratedMoviesDataset, title);
     }
 
-    private Dataset<Row> filterDatasetByColumn(Dataset<Row> dataset, String columnName, Object columnValue) {
+    private Dataset<Row> filterDatasetByLikeColumn(Dataset<Row> dataset, String columnName, String columnValue) {
         return dataset.filter(col(columnName).contains(columnValue));
     }
 
-    private Dataset<Row> filterDatasetByLikeTitle(Dataset<Row> dataset, Object columnValue) {
-        return filterDatasetByColumn(dataset, TITLE, columnValue);
+    private Dataset<Row> filterDatasetByLikeTitle(Dataset<Row> dataset, String columnValue) {
+        return filterDatasetByLikeColumn(dataset, TITLE, columnValue);
     }
 
     private Integer getMovieIdByTitle(String title) {
@@ -127,19 +127,13 @@ public class CsvReader {
     }
 
     public void findMoviesUsingView(String title) {
-        this.filterDataset(moviesDataSet, TITLE, title).createOrReplaceTempView("movies");
+        this.filterDatasetByLikeTitle(moviesDataSet, title).createOrReplaceTempView("movies");
         sparkSession.sql("SELECT * FROM movies").show();
     }
 
-    public Dataset<MovieRecord> findSerializedDataset() {
-        Encoder movieEncoder = Encoders.bean(MovieRecord.class);
-        return sparkSession
-                .read()
-                .format(FORMAT_CSV)
-                .option(SEPERATOR, COMMA)
-                .option(INFER_SCHEMA, TRUE)
-                .option(HEADER, TRUE)
-                .load("src/main/resources/movies.csv")
+    public Dataset findSerializedDataset() {
+        Encoder<MovieRecord> movieEncoder = Encoders.bean(MovieRecord.class);
+        return loadFile("src/main/resources/movies.csv")
                 .as(movieEncoder);
     }
 }
